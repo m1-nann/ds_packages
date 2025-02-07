@@ -3,7 +3,8 @@ description: Deadly simple future methods
 version: 1.0.7
 repository: https://github.com/uac-nhan-nguyen/ds_future
 environment:
-  sdk: '>=2.12.0 <3.0.0'
+  sdk: '>=3.6.2 <4.0.0'
+resolution: workspace
 
 dependencies:
   test: ^1.22.1

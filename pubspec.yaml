@@ -4,3 +4,6 @@ environment:
   sdk: ^3.6.0
 workspace:
   - ds_json
+  - ds_future
+  - ds_env
+  - ds_collection
