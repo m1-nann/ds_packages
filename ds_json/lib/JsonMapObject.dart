@@ -33,6 +33,21 @@ class JsonMapObject {
     return _getRecursive(keys, _data);
   }
 
+  /// Primary type parser
+  double? _parseDouble(dynamic item, {String? key}) {
+    if (item is int) {
+      return item.toDouble();
+    } else if (item is double) {
+      return item;
+    } else if (item == null) {
+      return null;
+    } else if (item is String) {
+      return double.parse(item);
+    } else {
+      throw 'Unhandled data type key[${key}] runtimeType=${item.runtimeType} data=${item}';
+    }
+  }
+
   /// Nullable getters
   int? getIntNullable(String key) {
     final item = _get(key);
@@ -54,17 +69,7 @@ class JsonMapObject {
   double? getDoubleNullable(String key) {
     final item = _get(key);
     try {
-      if (item is int) {
-        return item.toDouble();
-      } else if (item is double) {
-        return item;
-      } else if (item == null) {
-        return null;
-      } else if (item is String) {
-        return double.parse(item);
-      } else {
-        throw 'Unhandled data type key[${key}] runtimeType=${item.runtimeType} data=${item}';
-      }
+      return _parseDouble(item, key: key);
     } catch (e) {
       throw 'Invalid data format key[${key}] runtimeType=${item.runtimeType} data=${item}: ${e.toString()}';
     }
@@ -121,6 +126,35 @@ class JsonMapObject {
     }
   }
 
+  List<T>? getListNullable<T>(
+      String key, T Function(Map<String, dynamic> data) creator) {
+    try {
+      final item = _get(key);
+      if (item is List) {
+        return item.map((dynamic e) => creator(e)).toList();
+      } else {
+        throw 'Unhandled data type key[${key}] runtimeType=${item.runtimeType}';
+      }
+    } catch (e) {
+      throw 'Invalid data format key[${key}] expect=List runtimeType=${_data[key].runtimeType}: ${e.toString()}';
+    }
+  }
+
+  List<double>? getListOfDoubleNullable(String key) {
+    try {
+      final item = _get(key);
+      if (item is List) {
+        return item.map((dynamic e) {
+          return _parseDouble(e, key: key) ?? 0;
+        }).toList();
+      } else {
+        throw 'Unhandled data type key[${key}] runtimeType=${item.runtimeType}';
+      }
+    } catch (e) {
+      throw 'Invalid data format key[${key}] expect=List runtimeType=${_data[key].runtimeType}: ${e.toString()}';
+    }
+  }
+
   /// Error free, non-null default value getters
   int getInt(String key) {
     try {
@@ -154,7 +188,7 @@ class JsonMapObject {
     }
   }
 
-  bool getBool(String key)  {
+  bool getBool(String key) {
     try {
       return getBoolNullable(key) ?? false;
     } catch (e) {
@@ -162,53 +196,24 @@ class JsonMapObject {
     }
   }
 
-  /// Deprecated
-  double getDoubleRecursive(List<String> keys) {
-    assert(keys.isNotEmpty);
-    if (keys.length == 1) {
-      return getDouble(keys.first);
-    } else {
-      return getObjectOrNull(keys.first)?.getDoubleRecursive(keys.sublist(1)) ??
-          0;
-    }
-  }
-
-  double? getDoubleOrNull(String key) {
-    if (_data[key] == null) return null;
+  List<T> getList<T>(
+      String key, T Function(Map<String, dynamic> data) creator) {
     try {
-      return double.parse((_data[key] ?? '0') as String);
+      return getListNullable(key, creator) ?? [];
     } catch (e) {
-      throw 'Invalid data format key[${key}] runtimeType=${_data[key].runtimeType} data=${_data}: ${e.toString()}';
+      return [];
     }
   }
 
-  int getIntParse(String key) => int.parse(getString(key));
-
-  int getIntRecursive(List<String> keys) {
-    assert(keys.isNotEmpty);
-    if (keys.length == 1) {
-      return getInt(keys.first);
-    } else {
-      return getObjectOrNull(keys.first)?.getIntRecursive(keys.sublist(1)) ?? 0;
+  List<double> getListOfDouble(String key) {
+    try {
+      return getListOfDoubleNullable(key) ?? [];
+    } catch (e) {
+      return [];
     }
   }
 
-  int? getIntOrNull(String key) =>
-      _data[key] == null ? null : _data[key] as int;
-
-  bool getBoolRecursive(List<String> keys) {
-    assert(keys.isNotEmpty);
-    if (keys.length == 1) {
-      return getBool(keys.first);
-    } else {
-      return getObjectOrNull(keys.first)?.getBoolRecursive(keys.sublist(1)) ??
-          false;
-    }
-  }
-
-  bool? getBoolOrNull(String key) =>
-      _data[key] == null ? null : _data[key] as bool;
-
+  /// Deprecated
   bool hasKey(String key) => _data[key] != null;
 
   String getStringRecursive(List<String> keys) {
@@ -249,17 +254,6 @@ class JsonMapObject {
 
   Map<String, dynamic>? getObjectDataOrNull(String key) =>
       _data[key] == null ? null : getObjectData(key);
-
-  List<T> getList<T>(
-      String key, T Function(Map<String, dynamic> data) creator) {
-    try {
-      return ((_data[key] ?? <dynamic>[]) as List<dynamic>)
-          .map((dynamic e) => creator(e))
-          .toList();
-    } catch (e) {
-      throw 'Invalid data format key[${key}] expect=List runtimeType=${_data[key].runtimeType}: ${e.toString()}';
-    }
-  }
 
   List<T> getListOfArray<T>(
       String key, T Function(List<dynamic> data) creator) {
