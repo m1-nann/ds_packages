@@ -1,3 +1,6 @@
+## 1.0.8
+- Add `periodicNow`
+
 ## 1.0.5
 
 - Handle Queue with multiple exceptions
