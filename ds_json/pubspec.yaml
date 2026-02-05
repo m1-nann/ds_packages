@@ -1,11 +1,10 @@
 name: ds_json
 description: Deadly simple json object accessor
-version: 1.5.2
+version: 1.6.0
 repository: https://github.com/uac-nhan-nguyen/ds_packages
 environment:
   sdk: '>=3.6.2 <4.0.0'
 resolution: workspace
 
 dependencies:
-  http:
   test: ^1.22.1
