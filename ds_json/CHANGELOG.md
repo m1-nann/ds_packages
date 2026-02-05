@@ -1,4 +1,4 @@
-## 1.6.0
+## 1.7.0
 
 ### Breaking Changes
 - Remove deprecated `hasKey(String key)` method
