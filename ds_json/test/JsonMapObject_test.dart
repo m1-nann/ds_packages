@@ -41,5 +41,139 @@ main () {
       expect(o.getDateTime("data.invalid"), DateTime.fromMillisecondsSinceEpoch(0));
       expect(o.getDateTime("data.date_null"), DateTime.fromMillisecondsSinceEpoch(0));
     });
+
+    test("getStringOrNull with dot-notation", () {
+      final o = JsonMapObject({
+        "a": {
+          "b": {
+            "c": "nested_value"
+          },
+          "value": "direct_value"
+        },
+        "null_value": null,
+      });
+      expect(o.getStringOrNull("a.b.c"), "nested_value");
+      expect(o.getStringOrNull("a.value"), "direct_value");
+      expect(o.getStringOrNull("null_value"), null);
+      expect(o.getStringOrNull("missing"), null);
+      expect(o.getStringOrNull("a.missing"), null);
+    });
+
+    test("getObject with dot-notation", () {
+      final o = JsonMapObject({
+        "level1": {
+          "level2": {
+            "target": {"value": "found"}
+          }
+        }
+      });
+      final obj = o.getObject("level1.level2.target");
+      expect(obj.getString("value"), "found");
+    });
+
+    test("getObjectOrNull with dot-notation", () {
+      final o = JsonMapObject({
+        "level1": {
+          "level2": {
+            "target": {"value": "found"}
+          }
+        }
+      });
+      final obj = o.getObjectOrNull("level1.level2.target");
+      expect(obj?.getString("value"), "found");
+      expect(o.getObjectOrNull("missing.path"), null);
+      expect(o.getObjectOrNull("level1.missing"), null);
+    });
+
+    test("getObjectData with dot-notation", () {
+      final o = JsonMapObject({
+        "level1": {
+          "level2": {"key": "value"}
+        }
+      });
+      final data = o.getObjectData("level1.level2");
+      expect(data["key"], "value");
+    });
+
+    test("getObjectDataOrNull with dot-notation", () {
+      final o = JsonMapObject({
+        "level1": {
+          "level2": {"key": "value"}
+        }
+      });
+      expect(o.getObjectDataOrNull("level1.level2")?["key"], "value");
+      expect(o.getObjectDataOrNull("missing.path"), null);
+    });
+
+    test("getListString with dot-notation", () {
+      final o = JsonMapObject({
+        "data": {
+          "tags": ["a", "b", "c"]
+        },
+        "empty": []
+      });
+      expect(o.getListString("data.tags"), ["a", "b", "c"]);
+      expect(o.getListString("empty"), []);
+      expect(o.getListString("missing"), []);
+    });
+
+    test("getListStringNullable", () {
+      final o = JsonMapObject({
+        "data": {
+          "tags": ["a", "b", "c"]
+        },
+        "null_value": null,
+      });
+      expect(o.getListStringNullable("data.tags"), ["a", "b", "c"]);
+      expect(o.getListStringNullable("null_value"), null);
+      expect(o.getListStringNullable("missing"), null);
+    });
+
+    test("getListInt", () {
+      final o = JsonMapObject({
+        "data": {
+          "numbers": [1, 2, 3]
+        },
+        "empty": []
+      });
+      expect(o.getListInt("data.numbers"), [1, 2, 3]);
+      expect(o.getListInt("empty"), []);
+      expect(o.getListInt("missing"), []);
+    });
+
+    test("getListIntNullable", () {
+      final o = JsonMapObject({
+        "data": {
+          "numbers": [1, 2, 3]
+        },
+        "null_value": null,
+      });
+      expect(o.getListIntNullable("data.numbers"), [1, 2, 3]);
+      expect(o.getListIntNullable("null_value"), null);
+      expect(o.getListIntNullable("missing"), null);
+    });
+
+    test("getListOfArray with dot-notation", () {
+      final o = JsonMapObject({
+        "data": {
+          "points": [[1, 2], [3, 4]]
+        }
+      });
+      final points = o.getListOfArray("data.points", (arr) => "${arr[0]},${arr[1]}");
+      expect(points, ["1,2", "3,4"]);
+    });
+
+    test("getListOfArrayNullable", () {
+      final o = JsonMapObject({
+        "data": {
+          "points": [[1, 2], [3, 4]]
+        },
+        "null_value": null,
+      });
+      final points = o.getListOfArrayNullable("data.points", (arr) => "${arr[0]},${arr[1]}");
+      expect(points, ["1,2", "3,4"]);
+      expect(o.getListOfArrayNullable("null_value", (arr) => arr), null);
+      expect(o.getListOfArrayNullable("missing", (arr) => arr), null);
+    });
   });
 }

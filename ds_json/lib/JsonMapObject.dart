@@ -1,5 +1,18 @@
 part of 'ds_json.dart';
 
+/// JSON object accessor with dot-notation support for nested keys.
+///
+/// Usage: Extend this class and use `late final` fields with getters:
+/// ```dart
+/// class User extends JsonMapObject {
+///   User(super.data);
+///   late final int id = getInt("id");
+///   late final String name = getString("profile.name");
+///   late final DateTime createdAt = getDateTime("metadata.created_at");
+///   late final List<String> tags = getListString("tags");
+///   late final List<Post> posts = getList("posts", Post.new);
+/// }
+/// ```
 class JsonMapObject {
   final dynamic _data;
 
@@ -213,9 +226,6 @@ class JsonMapObject {
     }
   }
 
-  /// Deprecated
-  bool hasKey(String key) => _data[key] != null;
-
   String getStringRecursive(List<String> keys) {
     assert(keys.isNotEmpty);
     if (keys.length == 1) {
@@ -236,40 +246,91 @@ class JsonMapObject {
     }
   }
 
-  String? getStringOrNull(String key) =>
-      _data[key] == null ? null : _data[key] as String;
+  String? getStringOrNull(String key) {
+    final item = _get(key);
+    return item == null ? null : item as String;
+  }
 
-  JsonMapObject getObject(String key) => _data[key] is Map<String, dynamic>
-      ? JsonMapObject(_data[key] as Map<String, dynamic>)
-      : throw 'Invalid data format key[${key}] expect=Map runtimeType=${_data[key].runtimeType}';
+  JsonMapObject getObject(String key) {
+    final item = _get(key);
+    if (item is Map<String, dynamic>) {
+      return JsonMapObject(item);
+    }
+    throw 'Invalid data format key[${key}] expect=Map runtimeType=${item.runtimeType}';
+  }
 
-  JsonMapObject? getObjectOrNull(String key) => _data[key] == null
-      ? null
-      : JsonMapObject(_data[key] as Map<String, dynamic>);
+  JsonMapObject? getObjectOrNull(String key) {
+    final item = _get(key);
+    if (item == null) return null;
+    return JsonMapObject(item as Map<String, dynamic>);
+  }
 
-  Map<String, dynamic> getObjectData(String key) => _data[key]
-          is Map<String, dynamic>
-      ? _data[key] as Map<String, dynamic>
-      : throw 'Invalid data format key[${key}] expect=Map runtimeType=${_data[key].runtimeType}';
+  Map<String, dynamic> getObjectData(String key) {
+    final item = _get(key);
+    if (item is Map<String, dynamic>) {
+      return item;
+    }
+    throw 'Invalid data format key[${key}] expect=Map runtimeType=${item.runtimeType}';
+  }
 
-  Map<String, dynamic>? getObjectDataOrNull(String key) =>
-      _data[key] == null ? null : getObjectData(key);
+  Map<String, dynamic>? getObjectDataOrNull(String key) {
+    final item = _get(key);
+    if (item == null) return null;
+    return getObjectData(key);
+  }
+
+  List<T>? getListOfArrayNullable<T>(
+      String key, T Function(List<dynamic> data) creator) {
+    final item = _get(key);
+    if (item == null) return null;
+    if (item is List) {
+      return item.map((dynamic e) => creator(e)).toList();
+    }
+    throw 'Invalid data format key[${key}] expect=List runtimeType=${item.runtimeType}';
+  }
 
   List<T> getListOfArray<T>(
       String key, T Function(List<dynamic> data) creator) {
     try {
-      return ((_data[key] ?? <dynamic>[]) as List<dynamic>)
-          .map((dynamic e) => creator(e))
-          .toList();
+      return getListOfArrayNullable(key, creator) ?? [];
     } catch (e) {
-      throw 'Invalid data format key[${key}] expect=List runtimeType=${_data[key].runtimeType}: ${e.toString()}';
+      return [];
     }
   }
 
-  List<String> getListString(String key) =>
-      ((_data[key] ?? <dynamic>[]) as List<dynamic>)
-          .map((dynamic e) => e as String)
-          .toList();
+  List<String>? getListStringNullable(String key) {
+    final item = _get(key);
+    if (item == null) return null;
+    if (item is List) {
+      return item.map((dynamic e) => e as String).toList();
+    }
+    throw 'Invalid data format key[${key}] expect=List runtimeType=${item.runtimeType}';
+  }
+
+  List<String> getListString(String key) {
+    try {
+      return getListStringNullable(key) ?? [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  List<int>? getListIntNullable(String key) {
+    final item = _get(key);
+    if (item == null) return null;
+    if (item is List) {
+      return item.map((dynamic e) => e as int).toList();
+    }
+    throw 'Invalid data format key[${key}] expect=List runtimeType=${item.runtimeType}';
+  }
+
+  List<int> getListInt(String key) {
+    try {
+      return getListIntNullable(key) ?? [];
+    } catch (e) {
+      return [];
+    }
+  }
 
   List<String> getListStringRecursive(List<String> keys) {
     if (keys.length == 1) {
