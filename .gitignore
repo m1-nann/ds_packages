@@ -31,7 +31,6 @@ local
 # C++
 **/CMakeCache.txt
 **/cmake_install.cmake
-**/Makefile
 **/CMakeFiles/
 
 
